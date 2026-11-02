@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#030609">
+<title>NIGHTWATCH 3D — The Last Shift</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020406;color:#eaf4f5;font-family:Rajdhani,Arial,sans-serif}
+#game{position:fixed;inset:0;background:#030609}canvas{display:block;width:100%;height:100%}
+#hud{position:absolute;inset:0;pointer-events:none;text-shadow:0 2px 8px #000}
+.top{position:absolute;top:16px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:flex-start}
+.logo{font:20px 'Share Tech Mono',monospace;letter-spacing:3px}.logo small{display:block;color:#91a4ab;font-size:10px;letter-spacing:3px;margin-top:4px}
+.stats{display:flex;gap:22px;text-align:right;font:12px 'Share Tech Mono',monospace}.stats strong{display:block;font-size:25px;font-weight:400}.stats span{font-size:10px;color:#9badb4;letter-spacing:2px}
+#time{color:#fff}#battery{color:#a4f0bd}
+#usage{display:flex;gap:3px;justify-content:flex-end;margin-top:5px}.u{height:7px;width:12px;border:1px solid #8b9ba0}.u.on{background:#8cf0b4;box-shadow:0 0 8px #8cf0b4}
+#controls{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;max-width:98%;width:max-content}
+button{font:600 13px 'Share Tech Mono',monospace;letter-spacing:1px;color:#e7f2f4;background:linear-gradient(#1c2930,#080d11);border:1px solid #566a72;padding:12px 15px;cursor:pointer;box-shadow:0 6px 20px #0009;transition:.15s}
+button:hover{border-color:#8deaff;color:#8deaff}button.active{border-color:#ff3947;background:linear-gradient(#62232a,#200d11);color:#ffb4b9}
+#monitor{display:none;position:absolute;inset:6% 4% 13%;background:#071016f2;border:2px solid #84969b;box-shadow:0 0 0 100vmax #000b,0 0 35px #71e7ff55;pointer-events:auto}
+#monitor.open{display:block}.mhead{height:40px;display:flex;justify-content:space-between;align-items:center;padding:0 14px;border-bottom:1px solid #51636a;font:12px 'Share Tech Mono';letter-spacing:2px;color:#c8f5fa}
+.mbody{height:calc(100% - 40px);display:grid;grid-template-columns:1fr 200px;gap:10px;padding:10px}
+#feed{position:relative;overflow:hidden;border:1px solid #42545c;background:#101a20}#feed canvas{width:100%;height:100%}
+#feedLabel{position:absolute;top:12px;left:14px;font:13px 'Share Tech Mono';text-shadow:0 2px 5px #000}
+#camButtons{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-content:center}
+#camButtons button{font-size:10px;padding:10px 4px;min-width:0}
+#toast{position:absolute;top:19%;left:50%;transform:translateX(-50%);padding:9px 16px;background:#050b10dc;border:1px solid #61737a;font:12px 'Share Tech Mono';letter-spacing:1px;opacity:0;transition:.2s;pointer-events:none;text-align:center}
+#overlay,#ending{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse,#14202aef,#020406fa);padding:20px}
+#ending{display:none;text-align:center}#ending.show{display:flex}
+.panel{width:min(700px,94vw);padding:clamp(22px,5vw,48px);background:linear-gradient(145deg,#111d25f5,#05090df7);border:1px solid #657982;box-shadow:0 20px 90px #000}
+.kicker{font:12px 'Share Tech Mono';letter-spacing:5px;color:#ff4552}h1{font-size:clamp(42px,8vw,82px);line-height:.85;margin:17px 0 12px;letter-spacing:2px}h1 em{font-style:normal;color:#ff3947}
+.desc{font-size:18px;color:#a9bbc2;line-height:1.4;max-width:550px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:25px}.primary{background:#a51f2b;border-color:#f05a65;color:white}.help{margin-top:22px;border-top:1px solid #34464e;padding-top:15px;color:#91a5ad;font-size:14px;line-height:1.55}.help b{color:#e3eff1}
+#scare{display:none;position:absolute;inset:0;background:#210006;align-items:center;justify-content:center;z-index:15;animation:flash .09s infinite alternate}
+#scare.show{display:flex}@keyframes flash{to{background:#65000b}}
+#scareFace{font-size:min(50vw,400px);filter:drop-shadow(0 0 30px red);animation:shake .07s infinite alternate}@keyframes shake{to{transform:rotate(4deg) scale(1.15)}}
+.watermark{position:absolute;bottom:5px;right:10px;font:10px 'Share Tech Mono';letter-spacing:2px;color:#dcebed;opacity:.4;pointer-events:none}
+#crosshair{position:absolute;left:50%;top:50%;width:4px;height:4px;background:#b9e7eb;border-radius:50%;opacity:.35;transform:translate(-50%,-50%);pointer-events:none}
+@media(max-width:700px){.top{top:9px;left:10px;right:10px}.logo{font-size:15px}.stats{gap:9px}.stats strong{font-size:19px}.stats span{font-size:8px}#controls{bottom:9px;width:98%;gap:4px}#controls button{padding:11px 6px;font-size:9px;flex:1;min-width:0}.mbody{grid-template-columns:1fr 112px;padding:5px;gap:5px}#camButtons{gap:4px}#camButtons button{font-size:8px;padding:8px 2px}#monitor{inset:5% 2% 10%}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">
+ <div class="top"><div class="logo">NIGHTWATCH 3D<small>THE LAST SHIFT // SECURITY SECTOR 04</small></div>
+ <div class="stats"><div><strong id="time">12 AM</strong><span>SHIFT TIME</span></div><div><strong id="battery">100%</strong><span>POWER</span><div id="usage"><i class="u on"></i><i class="u"></i><i class="u"></i><i class="u"></i></div></div></div></div>
+ <div id="crosshair"></div><div id="toast"></div>
+</div>
+<div id="controls">
+ <button id="ll">◉ LEFT LIGHT</button><button id="ld">▣ LEFT DOOR</button><button id="mon">▤ CAMERAS</button><button id="rd">RIGHT DOOR ▣</button><button id="rl">RIGHT LIGHT ◉</button>
+</div>
+<div id="monitor"><div class="mhead"><span>CAMERA NETWORK // 3D LIVE FEED</span><span id="signal">SIGNAL: STABLE</span></div><div class="mbody"><div id="feed"><canvas id="feedCanvas"></canvas><div id="feedLabel">CAM 01 // MAIN STAGE</div></div><div id="camButtons"></div></div></div>
+<div class="watermark">ABELINO PUTRA</div>
+<div id="overlay"><div class="panel"><div class="kicker">3D SURVIVAL HORROR EXPERIENCE</div><h1>NIGHT<em>WATCH</em></h1><div class="desc">Kamu sendirian di ruang keamanan. Sesuatu bergerak di lorong gelap. Pantau kamera, kelola listrik, dan bertahan sampai pukul 6 AM.</div><div class="actions"><button class="primary" id="start">MULAI SHIFT</button><button id="tips">CARA BERMAIN</button></div><div class="help" id="help"><b>MISI:</b> Bertahan selama satu shift. Tutup pintu ketika makhluk mendekat, gunakan lampu untuk memeriksa lorong, dan jangan boros listrik.<br><b>KONTROL:</b> Klik tombol. A/D = pintu, Q/E = lampu, Space = kamera, M = mute. Gerakkan mouse untuk melihat sekitar (klik layar terlebih dahulu).</div><div class="help">3D procedural graphics • Original horror game • Bukan produk resmi Five Nights at Freddy's.</div></div></div>
+<div id="scare"><div id="scareFace">☠</div></div>
+<div id="ending"><div class="panel"><div class="kicker" id="endKicker">SHIFT COMPLETE</div><h1 id="endTitle">6 AM</h1><div class="desc" id="endText">Kamu berhasil bertahan.</div><div class="actions"><button class="primary" id="again">MAIN LAGI</button></div></div></div>
+<script type="module">
+import * as THREE from 'three';
+const $=id=>document.getElementById(id);
+const game=$('game'), scene=new THREE.Scene();scene.background=new THREE.Color(0x05090d);scene.fog=new THREE.FogExp2(0x080e13,.055);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;game.appendChild(renderer.domElement);
+const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,100);camera.position.set(0,1.65,4.8);camera.rotation.order='YXZ';
+const ambient=new THREE.HemisphereLight(0x9ab4c2,0x101016,.55);scene.add(ambient);
+const officeLight=new THREE.PointLight(0x9bb9c8,3,13);officeLight.position.set(0,3.4,1);officeLight.castShadow=true;scene.add(officeLight);
+const redLight=new THREE.PointLight(0x8e1720,.7,8);redLight.position.set(0,2,-3);scene.add(redLight);
+const mats={wall:new THREE.MeshStandardMaterial({color:0x252e32,roughness:.92}),dark:new THREE.MeshStandardMaterial({color:0x090e12,roughness:.8}),metal:new THREE.MeshStandardMaterial({color:0x4d5a5f,metalness:.75,roughness:.35}),floor:new THREE.MeshStandardMaterial({color:0x171d20,roughness:.8}),red:new THREE.MeshStandardMaterial({color:0x8d1721,metalness:.35,roughness:.4}),eye:new THREE.MeshStandardMaterial({color:0xff1528,emissive:0xff0015,emissiveIntensity:3}),screen:new THREE.MeshStandardMaterial({color:0x16333a,emissive:0x0d4651,emissiveIntensity:.7})};
+function box(parent,x,y,z,w,h,d,mat,cast=true){let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m}
+function plane(parent,x,y,z,w,h,mat,rotX=0){let m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.position.set(x,y,z);m.rotation.x=rotX;parent.add(m);return m}
+function makeRoom(){
+ box(scene,0,-.12,0,14,.25,18,mats.floor);box(scene,0,4,-5,14,.3,18,mats.dark,false);
+ box(scene,0,2,-8,14,4,.25,mats.wall);box(scene,-7,2,0,.25,4,16,mats.wall);box(scene,7,2,0,.25,4,16,mats.wall);
+ box(scene,0,4,0,14,.2,16,mats.dark,false);
+ // wall panels and pipes
+ for(let z=-6;z<4;z+=2){box(scene,-6.82,2,z,.08,3.5,.08,mats.metal);box(scene,6.82,2,z,.08,3.5,.08,mats.metal)}
+ // desk + monitors
+ box(scene,0,.82,1.25,4.4,.22,1.2,mats.metal);box(scene,0,.48,1.55,3.8,.65,.8,mats.dark);
+ for(let i=-1;i<=1;i++){let screen=box(scene,i*1.05,1.55,.85,.82,.62,.09,mats.screen);screen.rotation.x=-.12;box(scene,i*1.05,1.18,.83,.08,.28,.12,mats.metal)}
+ // ceiling lamps
+ for(let x of [-3.5,0,3.5]){box(scene,x,3.87,-1,.9,.05,.35,mats.metal);let l=new THREE.PointLight(0x9bc5d0,1.2,6);l.position.set(x,3.5,-1);scene.add(l)}
+ // door frames and sliding shutters
+ const doors={};
+ for(let side of [-1,1]){let x=side*5.7;box(scene,x,1.65,-.1,1.9,3.3,.3,mats.dark);box(scene,x,3.35,-.1,2,.18,.45,mats.metal);let shutter=box(scene,x,1.65,-.34,1.7,3.05,.18,mats.metal);for(let j=0;j<9;j++)box(scene,x,0.3+j*.34,-.235,1.6,.035,.025,mats.dark,false);shutter.position.y=4.9;doors[side]=shutter;
+ let hall=new THREE.PointLight(0x283f4b,.4,8);hall.position.set(side*5.7,1.7,-3);scene.add(hall);doors[side].userData.light=hall;
+ }
+ // office signage
+ box(scene,0,3.15,-7.82,3.5,.65,.08,mats.dark);let sign= new THREE.Mesh(new THREE.BoxGeometry(2.8,.04,.04),mats.red);sign.position.set(0,3.15,-7.75);scene.add(sign);
+ return doors;
+}
+const doors=makeRoom();
+const creature=new THREE.Group();scene.add(creature);
+const fur=new THREE.MeshStandardMaterial({color:0x3c3930,roughness:.95}),black=new THREE.MeshStandardMaterial({color:0x070707,roughness:.5}),teeth=new THREE.MeshStandardMaterial({color:0xc9c0a7,roughness:.5});
+function sphere(parent,x,y,z,sx,sy,sz,mat){let m=new THREE.Mesh(new THREE.SphereGeometry(1,20,16),mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;parent.add(m);return m}
+sphere(creature,0,1.35,0,.72,.92,.55,fur);sphere(creature,0,2.25,-.03,.76,.72,.62,fur);
+for(let s of [-1,1]){sphere(creature,s*.34,2.3,.48,.22,.2,.1,black);sphere(creature,s*.34,2.3,.57,.085,.09,.05,mats.eye);let ear=sphere(creature,s*.55,2.88,-.02,.22,.55,.18,fur);ear.rotation.z=-s*.2;for(let i=0;i<3;i++)sphere(creature,s*.45+i*.15,1.65,.48,.045,.15,.05,teeth)}
+sphere(creature,0,1.95,.53,.35,.14,.12,black);
+for(let s of [-1,1]){let arm=sphere(creature,s*.78,1.3,0,.23,.72,.25,fur);arm.rotation.z=-s*.25;sphere(creature,s*.82,.65,.02,.25,.25,.26,black)}
+creature.position.set(0,-10,-10);
+const cams=[
+ {name:'MAIN STAGE',pos:[0,2.1,-6.2],look:[0,1.4,-8]},
+ {name:'DINING ROOM',pos:[0,2.3,-3],look:[0,1,-7]},
+ {name:'BACKSTAGE',pos:[-4.6,2.2,-5],look:[0,1,-8]},
+ {name:'WEST HALL',pos:[-5.6,2.1,-1.8],look:[-5.6,1.4,-7]},
+ {name:'EAST HALL',pos:[5.6,2.1,-1.8],look:[5.6,1.4,-7]},
+ {name:'STORAGE',pos:[4.4,2.3,-6],look:[0,1,-8]},
+ {name:'LEFT DOOR',pos:[-4.3,2.2,1],look:[-5.7,1.5,-.2]},
+ {name:'RIGHT DOOR',pos:[4.3,2.2,1],look:[5.7,1.5,-.2]}
+];
+const camObjects=cams.map(c=>{let o=new THREE.PerspectiveCamera(66,1,.1,40);o.position.set(...c.pos);o.lookAt(...c.look);return o});
+const feedRenderer=new THREE.WebGLRenderer({canvas:$('feedCanvas'),antialias:true});feedRenderer.setPixelRatio(Math.min(devicePixelRatio,1.5));feedRenderer.setSize(700,450,false);feedRenderer.toneMapping=THREE.ACESFilmicToneMapping;
+let activeCam=0;const camButtons=$('camButtons');cams.forEach((c,i)=>{let b=document.createElement('button');b.textContent=`CAM ${String(i+1).padStart(2,'0')} / ${c.name}`;b.onclick=()=>selectCam(i);camButtons.appendChild(b)});
+function selectCam(i){activeCam=i;[...camButtons.children].forEach((b,j)=>b.classList.toggle('active',j===i));$('feedLabel').textContent=`CAM ${String(i+1).padStart(2,'0')} // ${cams[i].name}`;beep(480,.05,'square',.015)}
+let yaw=0,pitch=0,drag=false,lastX=0,lastY=0;
+renderer.domElement.addEventListener('click',()=>{if(!monitor&&!ended&&!document.pointerLockElement)renderer.domElement.requestPointerLock?.()});
+document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&!monitor){yaw-=e.movementX*.002;pitch-=e.movementY*.0015;pitch=THREE.MathUtils.clamp(pitch,-.35,.35);camera.rotation.set(pitch,yaw,0,'YXZ')}});
+let power=100,seconds=0,doorL=false,doorR=false,lightL=false,lightR=false,monitor=false,ended=false,muted=false,enemy={left:0,right:0},last=performance.now(),toastTimer;
+function toast(t){$('toast').textContent=t;$('toast').style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').style.opacity=0,1500)}
+let audio;function beep(f=150,d=.1,type='sawtooth',v=.035){if(muted)return;try{audio??=new(window.AudioContext||window.webkitAudioContext)();let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+d);o.stop(audio.currentTime+d)}catch(e){}}
+function updateUI(){[['ld',doorL],['rd',doorR],['ll',lightL],['rl',lightR],['mon',monitor]].forEach(([id,v])=>$(id).classList.toggle('active',v));let n=1+Number(doorL)+Number(doorR)+Number(lightL)+Number(lightR)+Number(monitor);[...$('usage').children].forEach((b,i)=>b.classList.toggle('on',i<n));}
+function action(k){if(ended)return;if(k==='mon'){monitor=!monitor;$('monitor').classList.toggle('open',monitor);if(monitor){lightL=lightR=false;document.exitPointerLock?.()}beep(monitor?650:300,.06,'square');}
+else if(power>0){if(k==='ld')doorL=!doorL;if(k==='rd')doorR=!doorR;if(k==='ll'){lightL=!lightL;if(lightL)lightR=false}if(k==='rl'){lightR=!lightR;if(lightR)lightL=false}beep(k==='ld'||k==='rd'?100:430,.1,'square',.025)}
+updateUI()}
+[['ll','ll'],['ld','ld'],['mon','mon'],['rd','rd'],['rl','rl']].forEach(([id,k])=>$(id).onclick=()=>action(k));
+addEventListener('keydown',e=>{if(e.repeat)return;let k=e.key.toLowerCase();if(k==='a')action('ld');if(k==='d')action('rd');if(k==='q')action('ll');if(k==='e')action('rl');if(k===' '){e.preventDefault();action('mon')}if(k==='m'){muted=!muted;toast(muted?'AUDIO MUTED':'AUDIO ON')}if(k==='escape'&&monitor)action('mon')});
+function setEnemy(side,v){enemy[side]=THREE.MathUtils.clamp(v,0,1);let z=-7+enemy[side]*6.3;creature.position.set(side==='left'?-5.6:5.6,0,z);creature.rotation.y=side==='left'?-.15:.15;creature.visible=enemy[side]>.25;creature.userData.side=side}
+function reset(){power=100;seconds=0;enemy={left:0,right:0};doorL=doorR=lightL=lightR=monitor=false;ended=false;creature.visible=false;creature.position.set(0,-10,-10);$('overlay').style.display='none';$('ending').classList.remove('show');$('scare').classList.remove('show');$('monitor').classList.remove('open');yaw=pitch=0;camera.rotation.set(0,0,0);updateUI();last=performance.now();beep(90,.4);renderer.domElement.requestPointerLock?.()}
+$('start').onclick=reset;$('again').onclick=reset;$('tips').onclick=()=>toast('TUTUP PINTU SAAT MUSUH TIBA DI LORONG!');
+function scare(){if(ended)return;ended=true;document.exitPointerLock?.();$('scare').classList.add('show');beep(42,.9,'sawtooth',.13);setTimeout(()=>{$('scare').classList.remove('show');$('endKicker').textContent='SIGNAL LOST';$('endTitle').textContent='GAME OVER';$('endText').textContent='Makhluk itu berhasil masuk. Atur kamera dan hemat daya untuk mencoba lagi.';$('ending').classList.add('show')},1450)}
+function win(){ended=true;document.exitPointerLock?.();$('endKicker').textContent='SHIFT COMPLETE';$('endTitle').textContent='6 AM';$('endText').textContent='Kamu berhasil bertahan sampai pagi. Namun kamera terakhir merekam sesuatu yang bergerak…';$('ending').classList.add('show');beep(680,.35,'sine')}
+function tick(now){requestAnimationFrame(tick);let dt=Math.min((now-last)/1000,.08);last=now;if(!ended&&$('overlay').style.display==='none'){
+ seconds+=dt;let hour=Math.min(6,Math.floor(seconds/15));$('time').textContent=(hour===0?'12':hour)+' AM';if(seconds>=90){win()}
+ let use=1+Number(doorL)+Number(doorR)+Number(lightL)+Number(lightR)+Number(monitor);power=Math.max(0,power-(.035+use*.027)*dt*10);$('battery').textContent=Math.ceil(power)+'%';
+ if(power<=0){doorL=doorR=lightL=lightR=monitor=false;$('monitor').classList.remove('open');updateUI();if(Math.random()<dt*.08)scare()}
+ let ag=.045+hour*.018;
+ if(Math.random()<dt*ag){let s=Math.random()<.5?'left':'right';setEnemy(s,enemy[s]+.22+Math.random()*.2);if(Math.random()<.5)beep(80+Math.random()*60,.08,'triangle',.02)}
+ if(Math.random()<dt*.16){let s=Math.random()<.5?'left':'right';setEnemy(s,enemy[s]-.12)}
+ for(let s of ['left','right'])if(enemy[s]>.84){let closed=s==='left'?doorL:doorR;if(closed){setEnemy(s,enemy[s]-.32*dt);if(Math.random()<dt*.1)beep(60,.12,'square',.03)}else if(Math.random()<dt*(.25+hour*.07))scare()}
+ }
+ // lights, doors and camera view
+ doors[-1].position.y=THREE.MathUtils.lerp(doors[-1].position.y,doorL?1.65:4.9,dt*7);doors[1].position.y=THREE.MathUtils.lerp(doors[1].position.y,doorR?1.65:4.9,dt*7);
+ doors[-1].userData.light.intensity=lightL?5:.35;doors[1].userData.light.intensity=lightR?5:.35;
+ officeLight.intensity=power<=0?0.08:2.5+(lightL||lightR?.4:0);redLight.intensity=power<=0?1.8:.5;
+ if(lightL&&enemy.left>.5&&!doorL||lightR&&enemy.right>.5&&!doorR)creature.visible=true;
+ if(monitor){feedRenderer.setSize($('feed').clientWidth,$('feed').clientHeight,false);feedRenderer.render(scene,camObjects[activeCam])}else{renderer.render(scene,camera)}
+}
+requestAnimationFrame(tick);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script>
+</body></html>
